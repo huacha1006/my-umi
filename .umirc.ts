@@ -4,12 +4,13 @@ export default defineConfig({
   nodeModulesTransform: {
     type: 'none',
   },
-  base: '/path/',
-  title: '旭链科技官网',
+  base: '/',
+  history:{type:'hash'},
+  title: '金哲羽的官网',
   routes: [
-    { path: '/', redirect: '/home' },
+    { path: '/', redirect: '/index' },
     { path: "/login", component:'@/pages/User/login'},
-    { path: '/home', component: '@/pages/index' },
+    { path: '/index', component: '@/pages/index' },
     { path: '/product', component: '@/pages/Product' },
     { path: '/join', component: '@/pages/JoinUs' },
   ],
