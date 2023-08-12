@@ -1,5 +1,7 @@
 import './index.less';
 import { history, Link } from 'umi';
+import {ElementRef, useEffect, useRef, useState} from "react";
+import { throttle } from 'lodash'
 const tagList = [
   { name: '研发信息', path: '/product' },
   { name: '公司新闻', path: '/produce' },
@@ -7,7 +9,7 @@ const tagList = [
   { name: '加入我们', path: '/join' },
 ];
 
-const TagComponents: React.FC = () => {
+function TagComponents(){
   return (
     <>
       {tagList.map((item, index) => {
@@ -22,10 +24,31 @@ const TagComponents: React.FC = () => {
 };
 
 export default function Header() {
+  const [down,setDown] = useState<boolean>(false);
+  const divRef = useRef<any>(null)
+
+
+  useEffect(()=>{
+    window.addEventListener("scroll", srollFun, true);
+    return window.removeEventListener("scroll", srollFun)
+
+  },[])
+
+  const srollFun = ()=>{
+    let scroll = document.documentElement.scrollTop;
+
+    if(scroll > 40){
+        setDown(true)
+    }else{
+      setDown(false)
+    }
+  }
+
+
   return (
-    <main className="header-box">
+    <main className={ down ? "header-box slide_down shadow-xl" : "header-box"} ref={divRef}>
       <section className="header-container">
-        <div className="header-left">旭链科技</div>
+        <div className="header-left">金哲羽的小站</div>
         <div className="header-right">
           <TagComponents />
         </div>

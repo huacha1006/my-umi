@@ -68,9 +68,11 @@ export default function IndexPage() {
   });
 
   return (
-    <div>
+    <div className='relative'>
       <Header />
+      <div className='h-36 bg-blue-400'></div>
       <h1 className="title">Page index</h1>
+      <div className='h-screen'></div>
       {/* {CardInfoArr} */}
     </div>
   );
