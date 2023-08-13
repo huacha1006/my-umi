@@ -37,12 +37,12 @@ function Login(){
 
 
 
-  return <main className='flex justify-center items-center h-screen'>
+  return <main className='flex justify-center items-center h-screen page-container'>
     <Form
       name="basic"
       labelCol={{ span: 8 }}
       wrapperCol={{ span: 16 }}
-      style={{ maxWidth: 600 }}
+      style={{ maxWidth: 600 ,color:'white'}}
       initialValues={{ remember: true }}
       onFinish={onFinish}
       onFinishFailed={onFinishFailed}
@@ -77,14 +77,9 @@ function Login(){
             onClick={()=>handleChangeCode()}
           />
       </Space>
-
-
       </Form.Item>
-
-
-
       <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-        <Button type="primary" htmlType="submit" block>
+        <Button ghost  htmlType="submit" block>
           登录
         </Button>
       </Form.Item>

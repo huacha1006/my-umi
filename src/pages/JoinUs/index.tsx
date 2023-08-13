@@ -1,191 +1,153 @@
-import type { ProColumns } from '@ant-design/pro-components';
-import { EditableProTable } from '@ant-design/pro-components';
 import React, { useState, useRef, useEffect } from 'react';
-import { Spin, Select, Button } from 'antd';
+import {
+  Table,
+  Spin,
+  Select,
+  Button,
+  Input,
+  Space,
+  Col,
+  DatePicker,
+  Drawer,
+  Form,
+  Row,
+} from 'antd';
+import { GetAllUsersHttp, CreateUserHttp } from '@/services';
 // import * as echarts from 'echarts';
+import type { user } from '@/types/user';
 
-type DataSourceType = {
-  id: React.Key;
-  title?: string;
-  decs?: string;
-  state?: string;
-  created_at?: string;
-  children?: DataSourceType[];
-};
+const { Option } = Select;
 
-const defaultData: DataSourceType[] = new Array(0).fill(1).map((_, index) => {
-  return {
-    id: (Date.now() + index).toString(),
-    title: `活动名称${index}`,
-    decs: '这个活动真好玩',
-    state: 'open',
-    created_at: '1590486176000',
-  };
-});
 function JoinUs() {
-  const [editableKeys, setEditableRowKeys] = useState<React.Key[]>(() =>
-    defaultData.map((item) => item.id),
-  );
-  const [dataSource, setDataSource] = useState<DataSourceType[]>([]);
+  const [keyWord, setKeyword] = useState<string>('');
+  const [open, setOpen] = useState(false);
+  const [dataSource, setDataSource] = useState<user[]>([]);
 
-  const [loading, setLoading] = useState<boolean>(true);
+  const showDrawer = () => {
+    setOpen(true);
+  };
+
+  const onClose = () => {
+    setOpen(false);
+  };
+
+  // 提交
+  const onSubmit = () => {
+    setOpen(false);
+  };
+
+  const onFinish = async (values: user) => {
+    console.log('Success:', values);
+    const params = {
+      ...values,
+      age: Number(values.age),
+      sex: Number(values.sex),
+    };
+    const res = await CreateUserHttp(params);
+    setOpen(false);
+  };
 
   const chartRef = useRef(null);
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    handleRequest();
+  }, []);
 
-  const waitTimePromise = async (time: number = 100) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true);
-      }, time);
-    });
+  const handleRequest = async () => {
+    const res = await GetAllUsersHttp(keyWord);
+    console.log(res);
+    setDataSource(res);
   };
 
-  const waitTime = async (time: number = 100) => {
-    await waitTimePromise(time);
-  };
-
-  async function handleRequest() {
-    await waitTime(2000);
-    setDataSource(defaultData);
-    return defaultData;
-  }
-
-  const columns: ProColumns<DataSourceType>[] = [
+  const columns = [
     {
-      title: '初始值',
-      dataIndex: 'title',
-      width: 200,
-      formItemProps: {
-        rules: [
-          {
-            required: true,
-            whitespace: true,
-            message: '此项是必填项',
-          },
-        ],
-      },
+      title: '姓名',
+      dataIndex: 'name',
+      key: 'name',
     },
     {
-      title: (
-        <div>
-          文本值
-          <Select
-            defaultValue="中文"
-            style={{ width: 120, marginLeft: 10 }}
-            // onChange={handleChange}
-            options={[
-              { value: '中文', label: '中文' },
-              { value: '英语', label: '英语' },
-              { value: '法语', label: '法语' },
-            ]}
-          />
-        </div>
-      ),
-      dataIndex: 'title',
-      width: 200,
-      formItemProps: {
-        rules: [
-          {
-            required: true,
-            whitespace: true,
-            message: '此项是必填项',
-          },
-        ],
-      },
+      title: '电话号',
+      dataIndex: 'phone',
+      key: 'phone',
     },
     {
-      title: '操作',
-      valueType: 'option',
-      width: 250,
-      render: () => {
-        return null;
-      },
+      title: '年龄',
+      dataIndex: 'age',
+      key: 'age',
+    },
+    {
+      title: '性别',
+      dataIndex: 'sex',
+      key: 'sex',
     },
   ];
-
-  // const columnsRef = useRef(columns);
-  const [columnsState, setColumnsState] = useState(columns);
 
   return (
     <div>
       <h1 style={{ textAlign: 'center' }}>加入我们</h1>
-      <EditableProTable<DataSourceType>
-        headerTitle="可编辑表格"
-        request={handleRequest}
-        columns={columnsState}
-        rowKey="id"
-        scroll={{
-          x: 'max-content',
-        }}
-        toolBarRender={() => [
-          <Button
-            // type="text"
-            key="rows"
-            onClick={() => {
-              const newColumn = {
-                title: (
-                  <div>
-                    文本值
-                    <Select
-                      defaultValue="中文"
-                      style={{ width: 120, marginLeft: 10 }}
-                      // onChange={handleChange}
-                      options={[
-                        { value: '中文', label: '中文' },
-                        { value: '英语', label: '英语' },
-                        { value: '法语', label: '法语' },
-                      ]}
-                    />
-                  </div>
-                ),
-                dataIndex: `state${columnsState.length}`,
-                width: 200,
-                formItemProps: {
-                  rules: [
-                    {
-                      required: true,
-                      whitespace: true,
-                      message: '此项是必填项',
-                    },
-                  ],
-                },
-              };
-              const index = columnsState.length - 1; // 获取最后一项的索引
+      <Space>
+        <Input value={keyWord} onChange={(e) => setKeyword(e.target.value)} />
+        <Button type="primary" key="search" onClick={() => handleRequest()}>
+          搜索
+        </Button>
 
-              setColumnsState([
-                ...columnsState.slice(0, index),
-                newColumn,
-                ...columnsState.slice(index),
-              ]);
-            }}
+        <Button type="primary" key="add" onClick={showDrawer}>
+          新增
+        </Button>
+      </Space>
+
+      <Table dataSource={dataSource} columns={columns} key="name" />
+
+      <Drawer
+        title="Create a new account"
+        width={420}
+        onClose={onClose}
+        open={open}
+        bodyStyle={{ paddingBottom: 80 }}
+        extra={<Space></Space>}
+      >
+        <Form layout="vertical" onFinish={onFinish}>
+          <Form.Item
+            name="name"
+            label="姓名"
+            rules={[{ required: true, message: 'Please enter user name' }]}
           >
-            添加一列
-          </Button>,
-        ]}
-        value={dataSource}
-        // onChange={setDataSource}
-        recordCreatorProps={{
-          newRecordType: 'dataSource',
-          record: () => ({
-            id: Date.now(),
-          }),
-        }}
-        editable={{
-          type: 'multiple',
-          editableKeys,
-          actionRender: (row: any, config: any, defaultDoms: any) => {
-            return dataSource.length === 1
-              ? [<span>删除</span>]
-              : [defaultDoms.delete];
-          },
-          onValuesChange: (record: any, recordList: any) => {
-            setDataSource(recordList);
-          },
-          onChange: setEditableRowKeys,
-        }}
-      />
+            <Input placeholder="Please enter user name" />
+          </Form.Item>
+
+          <Form.Item
+            name="phone"
+            label="电话"
+            rules={[{ required: true, message: 'Please enter user name' }]}
+          >
+            <Input placeholder="Please enter user name" />
+          </Form.Item>
+
+          <Form.Item
+            name="age"
+            label="年龄"
+            rules={[{ required: true, message: 'Please enter user name' }]}
+          >
+            <Input placeholder="Please enter user name" />
+          </Form.Item>
+
+          <Form.Item
+            name="sex"
+            label="性别"
+            rules={[{ required: true, message: 'Please select an owner' }]}
+          >
+            <Select placeholder="Please select an owner">
+              <Option value="1">Xiaoxiao Fu</Option>
+              <Option value="2">Maomao Zhou</Option>
+            </Select>
+          </Form.Item>
+
+          <Button onClick={onClose}>Cancel</Button>
+          <Button type="primary" htmlType="submit">
+            Submit
+          </Button>
+        </Form>
+      </Drawer>
     </div>
   );
 }
