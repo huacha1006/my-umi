@@ -11,8 +11,15 @@ import {
   Drawer,
   Form,
   Row,
+  message,
 } from 'antd';
-import { GetAllUsersHttp, CreateUserHttp } from '@/services';
+import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import {
+  GetAllUsersHttp,
+  CreateUserHttp,
+  UpdataAllUsersHttp,
+  DeleteAllUsersHttp,
+} from '@/services';
 // import * as echarts from 'echarts';
 import type { user } from '@/types/user';
 
@@ -20,8 +27,16 @@ const { Option } = Select;
 
 function JoinUs() {
   const [keyWord, setKeyword] = useState<string>('');
+  const [editId, setEditId] = useState<string>('');
   const [open, setOpen] = useState(false);
-  const [dataSource, setDataSource] = useState<user[]>([]);
+  const [dataSource, setDataSource] = useState<Required<user>[]>([]);
+  const [pagination, setPagination] = useState<TablePaginationConfig>({
+    current: 1,
+    pageSize: 2,
+    total: 0,
+  });
+
+  const [formRef] = Form.useForm<user>();
 
   const showDrawer = () => {
     setOpen(true);
@@ -43,23 +58,46 @@ function JoinUs() {
       age: Number(values.age),
       sex: Number(values.sex),
     };
-    const res = await CreateUserHttp(params);
+    editId && (await UpdataAllUsersHttp(editId, params));
+    !editId && (await CreateUserHttp(params));
     setOpen(false);
+    setEditId('');
   };
 
   const chartRef = useRef(null);
 
   useEffect(() => {
     handleRequest();
-  }, []);
+  }, [pagination.current, pagination.pageSize]);
 
   const handleRequest = async () => {
-    const res = await GetAllUsersHttp(keyWord);
-    console.log(res);
-    setDataSource(res);
+    const res = await GetAllUsersHttp({ ...pagination, keyWord });
+    console.log(res.total);
+    setDataSource(res.data);
+    setPagination({ ...pagination, total: res.total });
   };
 
-  const columns = [
+  const handleEdit = (id: string, record: Required<user>) => {
+    setEditId(id);
+    console.log(record);
+    formRef.setFieldsValue({
+      ...record,
+    });
+    setOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    const res = await DeleteAllUsersHttp(id);
+    message.success('删除成功');
+    handleRequest();
+  };
+
+  const handleTableChange = (current: number, pageSize: number) => {
+    setPagination({ ...pagination, current, pageSize });
+    // setPagination(pagination);
+  };
+
+  const columns: ColumnsType<Required<user>> = [
     {
       title: '姓名',
       dataIndex: 'name',
@@ -80,6 +118,20 @@ function JoinUs() {
       dataIndex: 'sex',
       key: 'sex',
     },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_, record) => (
+        <Space size="middle">
+          <Button type="link" onClick={() => handleEdit(record.id, record)}>
+            修改 {record.name}
+          </Button>
+          <Button type="link" onClick={() => handleDelete(record.id)}>
+            删除 {record.name}
+          </Button>
+        </Space>
+      ),
+    },
   ];
 
   return (
@@ -96,17 +148,28 @@ function JoinUs() {
         </Button>
       </Space>
 
-      <Table dataSource={dataSource} columns={columns} key="name" />
+      <Table
+        dataSource={dataSource}
+        columns={columns}
+        rowKey="id"
+        pagination={{
+          ...pagination,
+          showSizeChanger: true,
+          onChange: (page: number, pageSize: number) =>
+            handleTableChange(page, pageSize),
+        }}
+      />
 
       <Drawer
         title="Create a new account"
         width={420}
         onClose={onClose}
         open={open}
+        destroyOnClose
         bodyStyle={{ paddingBottom: 80 }}
         extra={<Space></Space>}
       >
-        <Form layout="vertical" onFinish={onFinish}>
+        <Form layout="vertical" form={formRef} onFinish={onFinish}>
           <Form.Item
             name="name"
             label="姓名"
@@ -144,7 +207,7 @@ function JoinUs() {
 
           <Button onClick={onClose}>Cancel</Button>
           <Button type="primary" htmlType="submit">
-            Submit
+            提交
           </Button>
         </Form>
       </Drawer>
